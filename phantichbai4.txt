@@ -1,0 +1,265 @@
+(1) Phân tích Thiết kế Lớp (Class Design Document)
+1. Class Attributes (Thuộc tính lớp)
+service_charge
+Kiểu dữ liệu: float
+Giá trị mặc định: 0.0
+Đây là thuộc tính dùng chung cho toàn bộ các đồ uống trong hệ thống.
+class MenuItem:
+    service_charge = 0.0
+Lý do sử dụng Class Attribute
+
+Phụ phí dịch vụ là quy định áp dụng cho toàn bộ cửa hàng, không phải riêng một món đồ uống.
+
+Ví dụ:
+
+Ngày thường: 0.0
+Dịp lễ: 0.1
+Dịp Tết: 0.15
+
+Nếu khai báo:
+
+self.service_charge
+
+thì mỗi đối tượng sẽ lưu một bản sao riêng của phụ phí.
+
+Khi quán thay đổi phụ phí từ 0% lên 10%, chương trình sẽ phải cập nhật từng món:
+
+item1.service_charge = 0.1
+item2.service_charge = 0.1
+item3.service_charge = 0.1
+...
+
+Điều này dễ gây sai sót nếu còn món chưa được cập nhật.
+
+Khi dùng Class Attribute, chỉ cần:
+
+MenuItem.service_charge = 0.1
+
+thì tất cả các món sẽ tự động sử dụng mức phụ phí mới.
+
+2. Instance Attributes (Thuộc tính đối tượng)
+
+Mỗi đối tượng MenuItem sẽ lưu thông tin riêng gồm:
+
+Public Attributes
+item_id
+item_name
+item_id: mã món.
+item_name: tên món.
+
+Hai thuộc tính này được phép truy cập trực tiếp vì không ảnh hưởng đến tính toán nghiệp vụ.
+
+Private Attributes
+__base_price
+__is_available
+__base_price: giá gốc của đồ uống.
+__is_available: trạng thái bán.
+
+Hai thuộc tính này được bảo vệ bằng Name Mangling.
+
+Lý do:
+
+Không cho phép lập trình viên hoặc người dùng sửa trực tiếp như:
+
+item.__base_price = -50000
+item.__is_available = False
+
+Mọi thay đổi đều phải đi qua các phương thức của lớp để đảm bảo dữ liệu luôn hợp lệ.
+
+3. Methods (Các phương thức)
+a. __init__(self, item_id, item_name, base_price)
+
+Đây là Constructor của lớp.
+
+Nhiệm vụ:
+
+Khởi tạo mã món.
+Khởi tạo tên món.
+Khởi tạo giá gốc.
+Khởi tạo trạng thái bán mặc định là Đang bán (True).
+
+Ví dụ:
+
+MenuItem("CF01", "Cà Phê Đen", 30000)
+
+Sau khi tạo:
+
+Mã món: CF01
+Tên: Cà Phê Đen
+Giá gốc: 30000
+Trạng thái: Đang bán
+b. Getters / Setters
+Getter
+
+Sử dụng:
+
+@property
+
+để đọc:
+
+base_price
+is_available
+
+Ví dụ:
+
+print(item.base_price)
+Setter
+
+Chỉ tạo Setter cho:
+
+base_price
+@base_price.setter
+
+Setter có nhiệm vụ kiểm tra dữ liệu trước khi cập nhật.
+
+Điều kiện:
+
+Phải là số.
+Phải lớn hơn 0.
+
+Nếu nhập:
+
+item.base_price = -50000
+
+Setter sẽ:
+
+Giá đồ uống phải lớn hơn 0!
+Giá cũ được giữ nguyên.
+
+Điều này giúp tránh dữ liệu sai trong hệ thống.
+
+Không tạo Setter cho is_available vì trạng thái bán chỉ được thay đổi thông qua phương thức nghiệp vụ toggle_availability().
+
+c. Instance Methods
+toggle_availability(self)
+
+Đây là Instance Method vì cần thao tác với dữ liệu của từng đối tượng.
+
+Có tham số:
+
+self
+
+Chức năng:
+
+Đảo trạng thái bán.
+
+Ví dụ:
+
+True  -> False
+False -> True
+
+Ứng dụng:
+
+Còn hàng → Hết hàng.
+Hết hàng → Đang bán.
+calculate_selling_price(self)
+
+Đây cũng là Instance Method.
+
+Có tham số:
+
+self
+
+Chức năng:
+
+Tính giá bán thực tế.
+
+Công thức:
+
+Giá niêm yết
+=
+Giá gốc
++
+(Giá gốc × service_charge)
+
+Ví dụ:
+
+Giá gốc: 50.000
+Phụ phí: 10%
+
+Giá bán = 55.000 VNĐ
+4. Class Method
+update_service_charge(cls, new_rate)
+
+Đây là Class Method.
+
+Decorator:
+
+@classmethod
+
+Có tham số:
+
+cls
+
+Chức năng:
+
+Thay đổi thuộc tính lớp:
+
+service_charge
+
+Ví dụ:
+
+MenuItem.update_service_charge(0.1)
+
+Sau khi cập nhật:
+
+MenuItem.service_charge
+
+sẽ bằng:
+
+0.1
+
+Tất cả các đối tượng MenuItem đều tự động tính giá mới mà không cần cập nhật từng món.
+
+5. Static Method
+is_valid_item_id(item_id)
+
+Đây là Static Method.
+
+Decorator:
+
+@staticmethod
+
+Không có:
+
+self
+cls
+
+Vì hàm này chỉ kiểm tra định dạng chuỗi.
+
+Điều kiện hợp lệ:
+
+Hai chữ cái in hoa.
+Hai chữ số.
+
+Ví dụ hợp lệ:
+
+CF01
+CF15
+TE01
+JU10
+
+Ví dụ không hợp lệ:
+
+cf01
+CF1
+CFA1
+CF100
+1234
+
+Có thể gọi trực tiếp:
+
+MenuItem.is_valid_item_id("CF01")
+
+mà không cần tạo đối tượng.
+
+Các nguyên lý OOP áp dụng trong chương trình
+Class: MenuItem là khuôn mẫu để tạo các đồ uống trong hệ thống.
+Object: Mỗi món như CF01, CF02, TE01 là một đối tượng riêng.
+Class Attribute: service_charge là thuộc tính dùng chung cho toàn bộ đồ uống.
+Instance Attribute: item_id, item_name, __base_price, __is_available là dữ liệu riêng của từng đối tượng.
+Encapsulation: __base_price và __is_available được đóng gói bằng Name Mangling để ngăn truy cập trực tiếp từ bên ngoài.
+Property (@property): Cho phép đọc dữ liệu private, đồng thời sử dụng @base_price.setter để kiểm tra giá trước khi cập nhật.
+Instance Method: toggle_availability() và calculate_selling_price() thao tác trên dữ liệu của từng món.
+Class Method: update_service_charge() cập nhật phụ phí dùng chung cho toàn bộ hệ thống.
+Static Method: is_valid_item_id() kiểm tra định dạng mã món mà không phụ thuộc vào đối tượng hoặc lớp.
